@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Secure MCQ Exam</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Custom styles for the Inter font and general body */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6; /* Light gray background */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            overflow: hidden; /* Prevent scrolling on main body */
+        }
+        .container {
+            max-width: 90%; /* Responsive width */
+            width: 100%;
+            background-color: #ffffff;
+            border-radius: 1rem; /* Rounded corners */
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05); /* Subtle shadow */
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 80vh; /* Ensure it takes up significant height */
+        }
+        /* Hide pages by default, JavaScript will show them */
+        .page {
+            display: none;
+            width: 100%;
+            text-align: center;
+        }
+        .page.active {
+            display: block;
+        }
+        input, button {
+            border-radius: 0.5rem; /* Rounded corners for inputs and buttons */
+        }
+        .option-button {
+            transition: all 0.2s ease-in-out;
+        }
+        .option-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+        .option-button.selected {
+            background-color: #60a5fa !important; /* Blue-500 */
+            color: white !important;
+            border-color: #3b82f6 !important; /* Blue-600 */
+        }
+        .option-button.correct {
+            background-color: #34d399 !important; /* Green-400 */
+            color: white !important;
+            border-color: #10b981 !important; /* Green-500 */
+        }
+        .option-button.incorrect {
+            background-color: #ef4444 !important; /* Red-500 */
+            color: white !important;
+            border-color: #dc2626 !important; /* Red-600 */
+        }
+        /* Custom modal for alerts */
+        .custom-modal {
+            display: none; /* Hidden by default */
+            position: fixed; /* Stay in place */
+            z-index: 1000; /* Sit on top */
+            left: 0;
+            top: 0;
+            width: 100%; /* Full width */
+            height: 100%; /* Full height */
+            overflow: auto; /* Enable scroll if needed */
+            background-color: rgba(0,0,0,0.6); /* Black w/ opacity */
+            justify-content: center;
+            align-items: center;
+        }
+        .custom-modal-content {
+            background-color: #fefefe;
+            margin: auto;
+            padding: 2rem;
+            border-radius: 1rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            max-width: 400px;
+            text-align: center;
+        }
+        .close-button {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+        }
+        .close-button:hover,
+        .close-button:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <!-- Page 1: User Information -->
+        <div id="page1" class="page active">
+            <h1 class="text-4xl font-extrabold text-gray-800 mb-6">Welcome to the Exam</h1>
+            <p class="text-lg text-gray-600 mb-8">Please enter your details to begin.</p>
+            <div class="w-full max-w-md space-y-6">
+                <input type="text" id="fullName" placeholder="Full Name" class="w-full p-4 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 text-lg">
+                <input type="tel" id="mobileNumber" placeholder="Mobile Number" class="w-full p-4 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 text-lg">
+                <button id="nextToLoginPage" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 px-6 rounded-lg shadow-lg transition duration-300 ease-in-out text-xl">Proceed to Login</button>
+            </div>
+        </div>
+
+        <!-- Page 2: Login Code -->
+        <div id="page2" class="page">
+            <h1 class="text-4xl font-extrabold text-gray-800 mb-6">Login to Exam</h1>
+            <p class="text-lg text-gray-600 mb-8">Enter the exam code to start your test.</p>
+            <div class="w-full max-w-md space-y-6">
+                <input type="password" id="loginCode" placeholder="Exam Code" class="w-full p-4 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 text-lg">
+                <button id="startExamButton" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-4 px-6 rounded-lg shadow-lg transition duration-300 ease-in-out text-xl">Start Exam</button>
+            </div>
+        </div>
+
+        <!-- Page 3: MCQ Test -->
+        <div id="page3" class="page">
+            <h1 class="text-4xl font-extrabold text-gray-800 mb-6">MCQ Test</h1>
+            <div class="w-full max-w-2xl mx-auto">
+                <div id="questionContainer" class="bg-gray-50 p-8 rounded-lg shadow-md mb-8">
+                    <p id="questionText" class="text-2xl font-semibold text-gray-800 mb-6"></p>
+                    <div id="optionsContainer" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <!-- Options will be dynamically loaded here -->
+                    </div>
+                </div>
+                <button id="nextQuestionButton" class="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-4 px-6 rounded-lg shadow-lg transition duration-300 ease-in-out text-xl">Next Question</button>
+                <button id="submitExamButton" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-4 px-6 rounded-lg shadow-lg transition duration-300 ease-in-out text-xl mt-4" style="display: none;">Submit Exam</button>
+            </div>
+        </div>
+
+        <!-- Page 4: Results -->
+        <div id="page4" class="page">
+            <h1 class="text-4xl font-extrabold text-gray-800 mb-6">Exam Results</h1>
+            <p class="text-lg text-gray-700 mb-4">Congratulations on completing the exam!</p>
+            <p class="text-3xl font-bold text-blue-700 mb-8">Your Score: <span id="scoreDisplay">0</span> / <span id="totalQuestionsDisplay">0</span></p>
+            <div id="resultDetails" class="w-full max-w-xl mx-auto text-left space-y-4">
+                <!-- Detailed results will be displayed here -->
+            </div>
+            <button id="restartExamButton" class="w-full max-w-xs mt-8 bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 px-6 rounded-lg shadow-lg transition duration-300 ease-in-out text-xl">Restart Exam</button>
+        </div>
+    </div>
+
+    <!-- Custom Modal for Alerts -->
+    <div id="customModal" class="custom-modal">
+        <div class="custom-modal-content">
+            <span class="close-button" id="closeModalButton">&times;</span>
+            <p id="modalMessage" class="text-lg font-semibold text-gray-800 mb-4"></p>
+            <button id="modalConfirmButton" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg">OK</button>
+        </div>
+    </div>
+
+    <script>
+        // --- Configuration ---
+        const EXAM_CODE = "@Naitik0"; // Hardcoded exam code for a static site (NOT SECURE FOR REAL EXAMS)
+        const questions = [
+            {
+                question: "What is the capital of France?",
+                options: ["Berlin", "Madrid", "Paris", "Rome"],
+                correctAnswer: "Paris"
+            },
+            {
+                question: "Which planet is known as the Red Planet?",
+                options: ["Earth", "Mars", "Jupiter", "Venus"],
+                correctAnswer: "Mars"
+            },
+            {
+                question: "What is the largest ocean on Earth?",
+                options: ["Atlantic Ocean", "Indian Ocean", "Arctic Ocean", "Pacific Ocean"],
+                correctAnswer: "Pacific Ocean"
+            },
+            {
+                question: "Who painted the Mona Lisa?",
+                options: ["Vincent van Gogh", "Pablo Picasso", "Leonardo da Vinci", "Claude Monet"],
+                correctAnswer: "Leonardo da Vinci"
+            },
+            {
+                question: "What is the chemical symbol for water?",
+                options: ["O2", "H2O", "CO2", "NaCl"],
+                correctAnswer: "H2O"
+            }
+        ];
+
+        // --- DOM Elements ---
+        const pages = {
+            page1: document.getElementById('page1'),
+            page2: document.getElementById('page2'),
+            page3: document.getElementById('page3'),
+            page4: document.getElementById('page4')
+        };
+        const fullNameInput = document.getElementById('fullName');
+        const mobileNumberInput = document.getElementById('mobileNumber');
+        const nextToLoginPageButton = document.getElementById('nextToLoginPage');
+        const loginCodeInput = document.getElementById('loginCode');
+        const startExamButton = document.getElementById('startExamButton');
+        const questionText = document.getElementById('questionText');
+        const optionsContainer = document.getElementById('optionsContainer');
+        const nextQuestionButton = document.getElementById('nextQuestionButton');
+        const submitExamButton = document.getElementById('submitExamButton');
+        const scoreDisplay = document.getElementById('scoreDisplay');
+        const totalQuestionsDisplay = document.getElementById('totalQuestionsDisplay');
+        const resultDetails = document.getElementById('resultDetails');
+        const restartExamButton = document.getElementById('restartExamButton');
+
+        // Modal Elements
+        const customModal = document.getElementById('customModal');
+        const modalMessage = document.getElementById('modalMessage');
+        const closeModalButton = document.getElementById('closeModalButton');
+        const modalConfirmButton = document.getElementById('modalConfirmButton');
+
+        // --- State Variables ---
+        let currentPage = 'page1';
+        let currentQuestionIndex = 0;
+        let score = 0;
+        let userAnswers = [];
+        let examStarted = false; // Flag to track if exam has started
+
+        // --- Utility Functions ---
+
+        /**
+         * Displays a custom modal message instead of alert().
+         * @param {string} message The message to display.
+         * @param {boolean} isCritical If true, modal cannot be closed by user.
+         * @param {function} onConfirm Callback function when confirm button is clicked.
+         */
+        function showCustomModal(message, isCritical = false, onConfirm = null) {
+            modalMessage.textContent = message;
+            customModal.style.display = 'flex'; // Use flex to center content
+            if (isCritical) {
+                closeModalButton.style.display = 'none'; // Hide close button for critical alerts
+            } else {
+                closeModalButton.style.display = 'block';
+            }
+
+            // Remove previous event listeners
+            modalConfirmButton.onclick = null;
+            closeModalButton.onclick = null;
+
+            modalConfirmButton.onclick = () => {
+                customModal.style.display = 'none';
+                if (onConfirm) onConfirm();
+            };
+            closeModalButton.onclick = () => {
+                if (!isCritical) {
+                    customModal.style.display = 'none';
+                }
+            };
+        }
+
+        /**
+         * Switches the active page in the application.
+         * @param {string} pageId The ID of the page to activate.
+         */
+        function showPage(pageId) {
+            Object.values(pages).forEach(page => page.classList.remove('active'));
+            pages[pageId].classList.add('active');
+            currentPage = pageId;
+        }
+
+        /**
+         * Requests full-screen mode for the document.
+         * Requires user interaction to trigger.
+         */
+        function requestFullScreen() {
+            if (document.documentElement.requestFullscreen) {
+                document.documentElement.requestFullscreen();
+            } else if (document.documentElement.mozRequestFullScreen) { /* Firefox */
+                document.documentElement.mozRequestFullScreen();
+            } else if (document.documentElement.webkitRequestFullscreen) { /* Chrome, Safari and Opera */
+                document.documentElement.webkitRequestFullscreen();
+            } else if (document.documentElement.msRequestFullscreen) { /* IE/Edge */
+                document.documentElement.msRequestFullscreen();
+            }
+        }
+
+        /**
+         * Exits full-screen mode.
+         */
+        function exitFullScreen() {
+            if (document.exitFullscreen) {
+                document.exitFullscreen();
+            } else if (document.mozCancelFullScreen) { /* Firefox */
+                document.mozCancelFullScreen();
+            } else if (document.webkitExitFullscreen) { /* Chrome, Safari and Opera */
+                document.webkitExitFullscreen();
+            } else if (document.msExitFullscreen) { /* IE/Edge */
+                document.msExitFullscreen();
+            }
+        }
+
+        /**
+         * Loads the current question and its options into the UI.
+         */
+        function loadQuestion() {
+            if (currentQuestionIndex < questions.length) {
+                const question = questions[currentQuestionIndex];
+                questionText.textContent = `${currentQuestionIndex + 1}. ${question.question}`;
+                optionsContainer.innerHTML = ''; // Clear previous options
+
+                question.options.forEach((option, index) => {
+                    const button = document.createElement('button');
+                    button.textContent = option;
+                    button.classList.add(
+                        'option-button',
+                        'w-full', 'p-4', 'border', 'border-gray-300', 'text-lg', 'text-gray-700',
+                        'hover:bg-blue-100', 'focus:outline-none', 'focus:ring-2', 'focus:ring-blue-500',
+                        'rounded-lg', 'transition', 'duration-200', 'ease-in-out'
+                    );
+                    button.dataset.option = option;
+                    button.addEventListener('click', () => selectOption(button, option));
+                    optionsContainer.appendChild(button);
+                });
+
+                // Update button visibility
+                nextQuestionButton.style.display = 'block';
+                submitExamButton.style.display = 'none';
+                if (currentQuestionIndex === questions.length - 1) {
+                    nextQuestionButton.style.display = 'none';
+                    submitExamButton.style.display = 'block';
+                }
+            }
+        }
+
+        /**
+         * Handles the selection of an answer option.
+         * @param {HTMLButtonElement} selectedButton The button element that was clicked.
+         * @param {string} selectedOption The text of the selected option.
+         */
+        function selectOption(selectedButton, selectedOption) {
+            // Remove 'selected' class from all options for the current question
+            Array.from(optionsContainer.children).forEach(button => {
+                button.classList.remove('selected');
+            });
+
+            // Add 'selected' class to the clicked button
+            selectedButton.classList.add('selected');
+
+            // Store the user's answer for the current question
+            userAnswers[currentQuestionIndex] = selectedOption;
+        }
+
+        /**
+         * Calculates the score and displays results.
+         */
+        function showResults() {
+            score = 0;
+            resultDetails.innerHTML = ''; // Clear previous results
+
+            questions.forEach((question, index) => {
+                const userAnswer = userAnswers[index];
+                const isCorrect = userAnswer === question.correctAnswer;
+
+                if (isCorrect) {
+                    score++;
+                }
+
+                const resultItem = document.createElement('div');
+                resultItem.classList.add('p-4', 'rounded-lg', 'shadow-sm', 'mb-2', isCorrect ? 'bg-green-50' : 'bg-red-50');
+                resultItem.innerHTML = `
+                    <p class="font-semibold text-gray-900">${index + 1}. ${question.question}</p>
+                    <p class="${isCorrect ? 'text-green-700' : 'text-red-700'}">Your Answer: ${userAnswer || 'Not Answered'}</p>
+                    <p class="text-gray-600">Correct Answer: ${question.correctAnswer}</p>
+                `;
+                resultDetails.appendChild(resultItem);
+            });
+
+            scoreDisplay.textContent = score;
+            totalQuestionsDisplay.textContent = questions.length;
+            showPage('page4');
+            exitFullScreen(); // Exit full screen when exam ends
+            examStarted = false; // Reset exam started flag
+        }
+
+        /**
+         * Resets the exam state to allow restarting.
+         */
+        function resetExam() {
+            currentQuestionIndex = 0;
+            score = 0;
+            userAnswers = [];
+            fullNameInput.value = '';
+            mobileNumberInput.value = '';
+            loginCodeInput.value = '';
+            showPage('page1');
+        }
+
+        /**
+         * Handles the "exam cancelled" scenario due to cheating attempts.
+         */
+        function cancelExam() {
+            if (examStarted) { // Only cancel if exam is actively running
+                showCustomModal("Exam cancelled due to suspicious activity (e.g., leaving full screen, switching tabs). Please contact the administrator.", true, () => {
+                    resetExam(); // Reset and go back to start
+                });
+                exitFullScreen();
+                examStarted = false; // Ensure exam is marked as not started
+            }
+        }
+
+        // --- Event Listeners ---
+
+        // Page 1: User Info -> Page 2: Login
+        nextToLoginPageButton.addEventListener('click', () => {
+            const fullName = fullNameInput.value.trim();
+            const mobileNumber = mobileNumberInput.value.trim();
+
+            if (fullName === '' || mobileNumber === '') {
+                showCustomModal("Please fill in both your full name and mobile number.");
+                return;
+            }
+            // Basic validation for mobile number (e.g., 10 digits)
+            if (!/^\d{10}$/.test(mobileNumber)) {
+                showCustomModal("Please enter a valid 10-digit mobile number.");
+                return;
+            }
+
+            // Store user info (for display in results, not for persistence in static site)
+            localStorage.setItem('userName', fullName);
+            localStorage.setItem('userMobile', mobileNumber);
+
+            showPage('page2');
+        });
+
+        // Page 2: Login -> Page 3: Exam
+        startExamButton.addEventListener('click', () => {
+            const enteredCode = loginCodeInput.value.trim();
+            if (enteredCode === EXAM_CODE) {
+                requestFullScreen(); // Request full screen on exam start
+                showPage('page3');
+                loadQuestion();
+                examStarted = true; // Mark exam as started
+                // Push a state to history to try and disable back button
+                history.pushState(null, null, location.href);
+            } else {
+                showCustomModal("Incorrect exam code. Please try again.");
+            }
+        });
+
+        // Page 3: Next Question
+        nextQuestionButton.addEventListener('click', () => {
+            if (userAnswers[currentQuestionIndex] === undefined) {
+                showCustomModal("Please select an answer before proceeding.");
+                return;
+            }
+            currentQuestionIndex++;
+            if (currentQuestionIndex < questions.length) {
+                loadQuestion();
+            }
+        });
+
+        // Page 3: Submit Exam
+        submitExamButton.addEventListener('click', () => {
+            if (userAnswers[currentQuestionIndex] === undefined) {
+                showCustomModal("Please select an answer for the last question before submitting.");
+                return;
+            }
+            showResults();
+        });
+
+        // Page 4: Restart Exam
+        restartExamButton.addEventListener('click', () => {
+            resetExam();
+        });
+
+        // --- Anti-Cheating Measures (Client-Side Deterrents) ---
+
+        // Disable back button functionality during exam
+        window.addEventListener('popstate', function (event) {
+            if (examStarted && currentPage === 'page3') {
+                // If exam is active and user tries to go back, push state again to keep them on the page
+                history.pushState(null, null, location.href);
+                showCustomModal("Back button is disabled during the exam.", false);
+            }
+        });
+
+        // Detect full screen exit or tab switching
+        document.addEventListener('fullscreenchange', () => {
+            if (examStarted && !document.fullscreenElement) {
+                // If exam is started and user exits full screen
+                cancelExam();
+            }
+        });
+
+        document.addEventListener('visibilitychange', () => {
+            if (examStarted && document.hidden) {
+                // If exam is started and user switches tabs/minimizes
+                cancelExam();
+            }
+        });
+
+        window.addEventListener('blur', () => {
+            if (examStarted) {
+                // If exam is started and window loses focus (e.g., clicking outside browser, switching apps)
+                cancelExam();
+            }
+        });
+
+        // Prevent right-click context menu (basic deterrent)
+        document.addEventListener('contextmenu', function(e) {
+            if (examStarted) {
+                e.preventDefault();
+                showCustomModal("Right-click is disabled during the exam.");
+            }
+        });
+
+        // --- Initial Load ---
+        window.onload = () => {
+            showPage('page1'); // Start on the first page
+            totalQuestionsDisplay.textContent = questions.length; // Initialize total questions display
+        };
+
+    </script>
+</body>
+</html>
