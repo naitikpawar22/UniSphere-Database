@@ -4,523 +4,807 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Secure MCQ Exam</title>
-    <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        /* Custom styles for the Inter font and general body */
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+        
         body {
-            font-family: 'Inter', sans-serif;
-            background-color: #f3f4f6; /* Light gray background */
-            display: flex;
-            justify-content: center;
-            align-items: center;
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
             min-height: 100vh;
+            overflow: hidden;
             margin: 0;
-            overflow: hidden; /* Prevent scrolling on main body */
+            padding: 0;
         }
-        .container {
-            max-width: 90%; /* Responsive width */
+        
+        .glass-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border-radius: 16px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+        }
+        
+        .option-btn {
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .option-btn::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
             width: 100%;
-            background-color: #ffffff;
-            border-radius: 1rem; /* Rounded corners */
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05); /* Subtle shadow */
-            padding: 2rem;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateX(-100%);
+            transition: transform 0.3s ease;
+        }
+        
+        .option-btn:hover::after {
+            transform: translateX(0);
+        }
+        
+        .option-btn.selected {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+        }
+        
+        .option-btn.correct {
+            background: linear-gradient(135deg, #4ade80 0%, #22c55e 100%);
+            color: white;
+        }
+        
+        .option-btn.incorrect {
+            background: linear-gradient(135deg, #f87171 0%, #ef4444 100%);
+            color: white;
+        }
+        
+        .timer {
+            font-family: 'Courier New', monospace;
+            font-weight: 700;
+        }
+        
+        .progress-bar {
+            height: 8px;
+            border-radius: 4px;
+            transition: width 1s linear;
+        }
+        
+        /* Fullscreen styles */
+        :fullscreen {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            overflow: hidden;
+        }
+        
+        /* Mobile specific styles */
+        @media (max-width: 640px) {
+            .glass-card {
+                border-radius: 0;
+                min-height: 100vh;
+            }
+        }
+        
+        /* Lock overlay */
+        .lock-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0,0,0,0.9);
+            color: white;
             display: flex;
             flex-direction: column;
-            align-items: center;
             justify-content: center;
-            min-height: 80vh; /* Ensure it takes up significant height */
-        }
-        /* Hide pages by default, JavaScript will show them */
-        .page {
-            display: none;
-            width: 100%;
+            align-items: center;
+            z-index: 9999;
+            font-size: 1.5rem;
             text-align: center;
-        }
-        .page.active {
-            display: block;
-        }
-        input, button {
-            border-radius: 0.5rem; /* Rounded corners for inputs and buttons */
-        }
-        .option-button {
-            transition: all 0.2s ease-in-out;
-        }
-        .option-button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-        }
-        .option-button.selected {
-            background-color: #60a5fa !important; /* Blue-500 */
-            color: white !important;
-            border-color: #3b82f6 !important; /* Blue-600 */
-        }
-        .option-button.correct {
-            background-color: #34d399 !important; /* Green-400 */
-            color: white !important;
-            border-color: #10b981 !important; /* Green-500 */
-        }
-        .option-button.incorrect {
-            background-color: #ef4444 !important; /* Red-500 */
-            color: white !important;
-            border-color: #dc2626 !important; /* Red-600 */
-        }
-        /* Custom modal for alerts */
-        .custom-modal {
-            display: none; /* Hidden by default */
-            position: fixed; /* Stay in place */
-            z-index: 1000; /* Sit on top */
-            left: 0;
-            top: 0;
-            width: 100%; /* Full width */
-            height: 100%; /* Full height */
-            overflow: auto; /* Enable scroll if needed */
-            background-color: rgba(0,0,0,0.6); /* Black w/ opacity */
-            justify-content: center;
-            align-items: center;
-        }
-        .custom-modal-content {
-            background-color: #fefefe;
-            margin: auto;
             padding: 2rem;
-            border-radius: 1rem;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            max-width: 400px;
-            text-align: center;
         }
-        .close-button {
-            color: #aaa;
-            float: right;
-            font-size: 28px;
+        
+        .chances-counter {
+            font-size: 2rem;
             font-weight: bold;
-        }
-        .close-button:hover,
-        .close-button:focus {
-            color: black;
-            text-decoration: none;
-            cursor: pointer;
+            color: #f87171;
+            margin: 1rem 0;
         }
     </style>
 </head>
-<body>
-
-    <div class="container">
-        <!-- Page 1: User Information -->
-        <div id="page1" class="page active">
-            <h1 class="text-4xl font-extrabold text-gray-800 mb-6">Welcome to the Exam</h1>
-            <p class="text-lg text-gray-600 mb-8">Please enter your details to begin.</p>
-            <div class="w-full max-w-md space-y-6">
-                <input type="text" id="fullName" placeholder="Full Name" class="w-full p-4 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 text-lg">
-                <input type="tel" id="mobileNumber" placeholder="Mobile Number" class="w-full p-4 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 text-lg">
-                <button id="nextToLoginPage" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 px-6 rounded-lg shadow-lg transition duration-300 ease-in-out text-xl">Proceed to Login</button>
-            </div>
-        </div>
-
-        <!-- Page 2: Login Code -->
-        <div id="page2" class="page">
-            <h1 class="text-4xl font-extrabold text-gray-800 mb-6">Login to Exam</h1>
-            <p class="text-lg text-gray-600 mb-8">Enter the exam code to start your test.</p>
-            <div class="w-full max-w-md space-y-6">
-                <input type="password" id="loginCode" placeholder="Exam Code" class="w-full p-4 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 text-lg">
-                <button id="startExamButton" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-4 px-6 rounded-lg shadow-lg transition duration-300 ease-in-out text-xl">Start Exam</button>
-            </div>
-        </div>
-
-        <!-- Page 3: MCQ Test -->
-        <div id="page3" class="page">
-            <h1 class="text-4xl font-extrabold text-gray-800 mb-6">MCQ Test</h1>
-            <div class="w-full max-w-2xl mx-auto">
-                <div id="questionContainer" class="bg-gray-50 p-8 rounded-lg shadow-md mb-8">
-                    <p id="questionText" class="text-2xl font-semibold text-gray-800 mb-6"></p>
-                    <div id="optionsContainer" class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <!-- Options will be dynamically loaded here -->
-                    </div>
-                </div>
-                <button id="nextQuestionButton" class="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-4 px-6 rounded-lg shadow-lg transition duration-300 ease-in-out text-xl">Next Question</button>
-                <button id="submitExamButton" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-4 px-6 rounded-lg shadow-lg transition duration-300 ease-in-out text-xl mt-4" style="display: none;">Submit Exam</button>
-            </div>
-        </div>
-
-        <!-- Page 4: Results -->
-        <div id="page4" class="page">
-            <h1 class="text-4xl font-extrabold text-gray-800 mb-6">Exam Results</h1>
-            <p class="text-lg text-gray-700 mb-4">Congratulations on completing the exam!</p>
-            <p class="text-3xl font-bold text-blue-700 mb-8">Your Score: <span id="scoreDisplay">0</span> / <span id="totalQuestionsDisplay">0</span></p>
-            <div id="resultDetails" class="w-full max-w-xl mx-auto text-left space-y-4">
-                <!-- Detailed results will be displayed here -->
-            </div>
-            <button id="restartExamButton" class="w-full max-w-xs mt-8 bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 px-6 rounded-lg shadow-lg transition duration-300 ease-in-out text-xl">Restart Exam</button>
-        </div>
+<body class="flex items-center justify-center p-4">
+    <!-- Lock overlay (shown when not in fullscreen) -->
+    <div id="lock-overlay" class="lock-overlay hidden">
+        <i class="fas fa-lock text-5xl mb-4 text-red-500"></i>
+        <h2 class="text-2xl font-bold mb-2">Exam Locked!</h2>
+        <p class="mb-4">You must remain in fullscreen mode for the entire exam duration.</p>
+        <div class="chances-counter" id="chances-counter">Chances left: 5</div>
+        <p>Please return to fullscreen mode immediately to continue.</p>
     </div>
 
-    <!-- Custom Modal for Alerts -->
-    <div id="customModal" class="custom-modal">
-        <div class="custom-modal-content">
-            <span class="close-button" id="closeModalButton">&times;</span>
-            <p id="modalMessage" class="text-lg font-semibold text-gray-800 mb-4"></p>
-            <button id="modalConfirmButton" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg">OK</button>
+    <div id="app" class="w-full max-w-4xl">
+        <!-- Login Screen -->
+        <div id="login-screen" class="glass-card p-8 animate__animated animate__fadeIn">
+            <div class="text-center mb-8">
+                <img src="https://img.icons8.com/fluency/96/000000/exam.png" alt="Exam" class="mx-auto h-24 w-24"/>
+                <h1 class="text-3xl font-bold text-gray-800 mt-4">Secure MCQ Exam</h1>
+                <p class="text-gray-600 mt-2">Enter your details to begin the test</p>
+            </div>
+            
+            <div class="space-y-4">
+                <div>
+                    <label for="student-name" class="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
+                    <input type="text" id="student-name" class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition" placeholder="John Doe">
+                </div>
+                
+                <div>
+                    <label for="student-id" class="block text-sm font-medium text-gray-700 mb-1">Student ID</label>
+                    <input type="text" id="student-id" class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition" placeholder="STU12345">
+                </div>
+                
+                <div>
+                    <label for="exam-code" class="block text-sm font-medium text-gray-700 mb-1">Exam Code</label>
+                    <input type="password" id="exam-code" class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition" placeholder="Enter provided code">
+                </div>
+                
+                <div class="pt-2">
+                    <button id="start-exam-btn" class="w-full bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-semibold py-3 px-4 rounded-lg shadow-lg transition-all transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50">
+                        Start Exam
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Exam Screen -->
+        <div id="exam-screen" class="hidden glass-card p-6 md:p-8">
+            <div class="flex justify-between items-center mb-6">
+                <div class="flex items-center space-x-2">
+                    <i class="fas fa-user text-blue-500"></i>
+                    <span id="student-name-display" class="font-medium text-gray-700">John Doe</span>
+                </div>
+                
+                <div class="flex items-center space-x-4">
+                    <div class="flex items-center space-x-2">
+                        <i class="fas fa-clock text-blue-500"></i>
+                        <div id="timer" class="timer text-lg font-bold text-gray-800">20:00</div>
+                    </div>
+                    
+                    <div class="flex items-center space-x-2">
+                        <i class="fas fa-question-circle text-blue-500"></i>
+                        <span id="question-counter" class="font-medium text-gray-700">1/10</span>
+                    </div>
+                    
+                    <div class="flex items-center space-x-2">
+                        <i class="fas fa-exclamation-triangle text-yellow-500"></i>
+                        <span id="chances-display" class="font-medium text-gray-700">Chances: 5</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="mb-4 bg-gray-200 rounded-full h-2.5">
+                <div id="time-progress" class="progress-bar bg-blue-600 h-2.5 rounded-full" style="width: 100%"></div>
+            </div>
+            
+            <div id="warning-message" class="hidden bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 mb-6 animate__animated animate__fadeIn">
+                <div class="flex items-center">
+                    <i class="fas fa-exclamation-triangle mr-2"></i>
+                    <p class="font-medium">Warning: Don't switch tabs or exit fullscreen mode!</p>
+                </div>
+            </div>
+            
+            <div id="question-container" class="mb-8 animate__animated animate__fadeIn">
+                <h2 id="question-text" class="text-xl md:text-2xl font-semibold text-gray-800 mb-6"></h2>
+                
+                <div id="options-container" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <!-- Options will be loaded here -->
+                </div>
+            </div>
+            
+            <div class="flex justify-between">
+                <button id="prev-btn" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium py-2 px-6 rounded-lg transition">
+                    <i class="fas fa-arrow-left mr-2"></i> Previous
+                </button>
+                
+                <button id="next-btn" class="bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-6 rounded-lg transition transform hover:scale-105">
+                    Next <i class="fas fa-arrow-right ml-2"></i>
+                </button>
+            </div>
+        </div>
+        
+        <!-- Results Screen -->
+        <div id="results-screen" class="hidden glass-card p-6 md:p-8 animate__animated animate__fadeIn">
+            <div class="text-center mb-8">
+                <div class="inline-block p-4 bg-blue-100 rounded-full mb-4">
+                    <i class="fas fa-trophy text-blue-500 text-4xl"></i>
+                </div>
+                <h1 class="text-3xl font-bold text-gray-800 mb-2">Exam Completed!</h1>
+                <p id="result-message" class="text-gray-600">Here are your results</p>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                <div class="bg-blue-50 p-4 rounded-lg text-center">
+                    <div class="text-4xl font-bold text-blue-600 mb-2" id="score-display">0</div>
+                    <div class="text-sm text-blue-500 font-medium">SCORE</div>
+                </div>
+                
+                <div class="bg-green-50 p-4 rounded-lg text-center">
+                    <div class="text-4xl font-bold text-green-600 mb-2" id="correct-answers">0</div>
+                    <div class="text-sm text-green-500 font-medium">CORRECT</div>
+                </div>
+                
+                <div class="bg-purple-50 p-4 rounded-lg text-center">
+                    <div class="text-4xl font-bold text-purple-600 mb-2" id="time-taken">0:00</div>
+                    <div class="text-sm text-purple-500 font-medium">TIME TAKEN</div>
+                </div>
+            </div>
+            
+            <div id="detailed-results" class="mb-8">
+                <!-- Detailed results will be loaded here -->
+            </div>
+            
+            <button id="restart-btn" class="w-full bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-semibold py-3 px-4 rounded-lg shadow-lg transition-all transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50">
+                <i class="fas fa-redo mr-2"></i> Start New Exam
+            </button>
         </div>
     </div>
 
     <script>
-        // --- Configuration ---
-        const EXAM_CODE = "@Naitik0"; // Hardcoded exam code for a static site (NOT SECURE FOR REAL EXAMS)
+        // Exam configuration
+        const EXAM_CODE = "@Naitik0";
+        const EXAM_DURATION = 20 * 60; // 20 minutes in seconds
+        const PASSING_SCORE = 60;
+        const MAX_CHANCES = 5; // Number of allowed fullscreen exits
+        
+        // Questions database
         const questions = [
             {
                 question: "What is the capital of France?",
                 options: ["Berlin", "Madrid", "Paris", "Rome"],
-                correctAnswer: "Paris"
+                correctAnswer: "Paris",
+                marks: 1
             },
             {
                 question: "Which planet is known as the Red Planet?",
                 options: ["Earth", "Mars", "Jupiter", "Venus"],
-                correctAnswer: "Mars"
+                correctAnswer: "Mars",
+                marks: 1
             },
             {
                 question: "What is the largest ocean on Earth?",
                 options: ["Atlantic Ocean", "Indian Ocean", "Arctic Ocean", "Pacific Ocean"],
-                correctAnswer: "Pacific Ocean"
+                correctAnswer: "Pacific Ocean",
+                marks: 1
+            },
+            {
+                question: "Which of these are prime numbers? (Select all that apply)",
+                options: ["2", "4", "7", "9"],
+                correctAnswer: ["2", "7"],
+                marks: 2,
+                type: "multiple"
+            },
+            {
+                question: "What is the chemical symbol for gold?",
+                options: ["Au", "Ag", "Fe", "Hg"],
+                correctAnswer: "Au",
+                marks: 1
+            },
+            {
+                question: "Which language is used for web styling?",
+                options: ["HTML", "CSS", "JavaScript", "Python"],
+                correctAnswer: "CSS",
+                marks: 1
+            },
+            {
+                question: "What is the square root of 64?",
+                options: ["4", "6", "8", "10"],
+                correctAnswer: "8",
+                marks: 1
+            },
+            {
+                question: "Which of these are JavaScript frameworks? (Select all that apply)",
+                options: ["React", "Django", "Angular", "Flask"],
+                correctAnswer: ["React", "Angular"],
+                marks: 2,
+                type: "multiple"
             },
             {
                 question: "Who painted the Mona Lisa?",
                 options: ["Vincent van Gogh", "Pablo Picasso", "Leonardo da Vinci", "Claude Monet"],
-                correctAnswer: "Leonardo da Vinci"
+                correctAnswer: "Leonardo da Vinci",
+                marks: 1
             },
             {
-                question: "What is the chemical symbol for water?",
-                options: ["O2", "H2O", "CO2", "NaCl"],
-                correctAnswer: "H2O"
+                question: "What is the main component of the Sun?",
+                options: ["Liquid lava", "Hydrogen", "Oxygen", "Carbon"],
+                correctAnswer: "Hydrogen",
+                marks: 1
             }
         ];
-
-        // --- DOM Elements ---
-        const pages = {
-            page1: document.getElementById('page1'),
-            page2: document.getElementById('page2'),
-            page3: document.getElementById('page3'),
-            page4: document.getElementById('page4')
-        };
-        const fullNameInput = document.getElementById('fullName');
-        const mobileNumberInput = document.getElementById('mobileNumber');
-        const nextToLoginPageButton = document.getElementById('nextToLoginPage');
-        const loginCodeInput = document.getElementById('loginCode');
-        const startExamButton = document.getElementById('startExamButton');
-        const questionText = document.getElementById('questionText');
-        const optionsContainer = document.getElementById('optionsContainer');
-        const nextQuestionButton = document.getElementById('nextQuestionButton');
-        const submitExamButton = document.getElementById('submitExamButton');
-        const scoreDisplay = document.getElementById('scoreDisplay');
-        const totalQuestionsDisplay = document.getElementById('totalQuestionsDisplay');
-        const resultDetails = document.getElementById('resultDetails');
-        const restartExamButton = document.getElementById('restartExamButton');
-
-        // Modal Elements
-        const customModal = document.getElementById('customModal');
-        const modalMessage = document.getElementById('modalMessage');
-        const closeModalButton = document.getElementById('closeModalButton');
-        const modalConfirmButton = document.getElementById('modalConfirmButton');
-
-        // --- State Variables ---
-        let currentPage = 'page1';
+        
+        // DOM Elements
+        const lockOverlay = document.getElementById('lock-overlay');
+        const chancesCounter = document.getElementById('chances-counter');
+        const chancesDisplay = document.getElementById('chances-display');
+        const loginScreen = document.getElementById('login-screen');
+        const examScreen = document.getElementById('exam-screen');
+        const resultsScreen = document.getElementById('results-screen');
+        const studentNameInput = document.getElementById('student-name');
+        const studentIdInput = document.getElementById('student-id');
+        const examCodeInput = document.getElementById('exam-code');
+        const startExamBtn = document.getElementById('start-exam-btn');
+        const studentNameDisplay = document.getElementById('student-name-display');
+        const timerDisplay = document.getElementById('timer');
+        const questionCounter = document.getElementById('question-counter');
+        const timeProgress = document.getElementById('time-progress');
+        const warningMessage = document.getElementById('warning-message');
+        const questionText = document.getElementById('question-text');
+        const optionsContainer = document.getElementById('options-container');
+        const prevBtn = document.getElementById('prev-btn');
+        const nextBtn = document.getElementById('next-btn');
+        const scoreDisplay = document.getElementById('score-display');
+        const correctAnswersDisplay = document.getElementById('correct-answers');
+        const timeTakenDisplay = document.getElementById('time-taken');
+        const resultMessage = document.getElementById('result-message');
+        const detailedResults = document.getElementById('detailed-results');
+        const restartBtn = document.getElementById('restart-btn');
+        
+        // State variables
         let currentQuestionIndex = 0;
-        let score = 0;
-        let userAnswers = [];
-        let examStarted = false; // Flag to track if exam has started
-
-        // --- Utility Functions ---
-
-        /**
-         * Displays a custom modal message instead of alert().
-         * @param {string} message The message to display.
-         * @param {boolean} isCritical If true, modal cannot be closed by user.
-         * @param {function} onConfirm Callback function when confirm button is clicked.
-         */
-        function showCustomModal(message, isCritical = false, onConfirm = null) {
-            modalMessage.textContent = message;
-            customModal.style.display = 'flex'; // Use flex to center content
-            if (isCritical) {
-                closeModalButton.style.display = 'none'; // Hide close button for critical alerts
-            } else {
-                closeModalButton.style.display = 'block';
+        let userAnswers = Array(questions.length).fill(null);
+        let timer;
+        let timeLeft = EXAM_DURATION;
+        let examStartTime;
+        let examEndTime;
+        let fullscreenAttempted = false;
+        let cheatingAttempts = 0;
+        let examActive = false;
+        let remainingChances = MAX_CHANCES;
+        
+        // Initialize the app
+        function init() {
+            startExamBtn.addEventListener('click', startExam);
+            prevBtn.addEventListener('click', showPreviousQuestion);
+            nextBtn.addEventListener('click', showNextQuestion);
+            restartBtn.addEventListener('click', restartExam);
+            
+            // Anti-cheating event listeners
+            document.addEventListener('fullscreenchange', enforceFullscreen);
+            document.addEventListener('visibilitychange', checkTabSwitch);
+            document.addEventListener('keydown', preventDevTools);
+            document.addEventListener('contextmenu', preventContextMenu);
+            
+            // Check fullscreen status periodically
+            setInterval(checkFullscreenStatus, 1000);
+            
+            // Initialize UI
+            questionCounter.textContent = `1/${questions.length}`;
+            updateChancesDisplay();
+        }
+        
+        // Update chances display
+        function updateChancesDisplay() {
+            chancesCounter.textContent = `Chances left: ${remainingChances}`;
+            chancesDisplay.textContent = `Chances: ${remainingChances}`;
+        }
+        
+        // Start the exam
+        function startExam() {
+            const studentName = studentNameInput.value.trim();
+            const studentId = studentIdInput.value.trim();
+            const examCode = examCodeInput.value.trim();
+            
+            if (!studentName || !studentId) {
+                alert('Please enter your name and student ID');
+                return;
             }
-
-            // Remove previous event listeners
-            modalConfirmButton.onclick = null;
-            closeModalButton.onclick = null;
-
-            modalConfirmButton.onclick = () => {
-                customModal.style.display = 'none';
-                if (onConfirm) onConfirm();
-            };
-            closeModalButton.onclick = () => {
-                if (!isCritical) {
-                    customModal.style.display = 'none';
+            
+            if (examCode !== EXAM_CODE) {
+                alert('Invalid exam code. Please check and try again.');
+                return;
+            }
+            
+            studentNameDisplay.textContent = studentName;
+            loginScreen.classList.add('hidden');
+            examScreen.classList.remove('hidden');
+            examActive = true;
+            remainingChances = MAX_CHANCES;
+            updateChancesDisplay();
+            
+            // Start fullscreen (this will trigger enforceFullscreen)
+            requestFullscreen();
+            
+            // Start timer
+            startTimer();
+            
+            // Load first question
+            loadQuestion(currentQuestionIndex);
+            
+            // Record start time
+            examStartTime = new Date();
+        }
+        
+        // Request fullscreen
+        function requestFullscreen() {
+            const element = document.documentElement;
+            
+            if (element.requestFullscreen) {
+                element.requestFullscreen().catch(err => {
+                    showWarning("Please allow fullscreen for the exam");
+                    fullscreenAttempted = true;
+                });
+            } else if (element.mozRequestFullScreen) {
+                element.mozRequestFullScreen();
+            } else if (element.webkitRequestFullscreen) {
+                element.webkitRequestFullscreen();
+            } else if (element.msRequestFullscreen) {
+                element.msRequestFullscreen();
+            }
+            
+            fullscreenAttempted = true;
+        }
+        
+        // Enforce fullscreen - gives 5 chances before auto-submit
+        function enforceFullscreen() {
+            if (examActive && !document.fullscreenElement) {
+                // Show lock overlay
+                lockOverlay.classList.remove('hidden');
+                
+                // Decrease remaining chances
+                remainingChances--;
+                updateChancesDisplay();
+                
+                // Attempt to return to fullscreen
+                requestFullscreen();
+                
+                if (remainingChances <= 0) {
+                    autoSubmitExam("Exam terminated due to multiple fullscreen exits");
                 }
-            };
-        }
-
-        /**
-         * Switches the active page in the application.
-         * @param {string} pageId The ID of the page to activate.
-         */
-        function showPage(pageId) {
-            Object.values(pages).forEach(page => page.classList.remove('active'));
-            pages[pageId].classList.add('active');
-            currentPage = pageId;
-        }
-
-        /**
-         * Requests full-screen mode for the document.
-         * Requires user interaction to trigger.
-         */
-        function requestFullScreen() {
-            if (document.documentElement.requestFullscreen) {
-                document.documentElement.requestFullscreen();
-            } else if (document.documentElement.mozRequestFullScreen) { /* Firefox */
-                document.documentElement.mozRequestFullScreen();
-            } else if (document.documentElement.webkitRequestFullscreen) { /* Chrome, Safari and Opera */
-                document.documentElement.webkitRequestFullscreen();
-            } else if (document.documentElement.msRequestFullscreen) { /* IE/Edge */
-                document.documentElement.msRequestFullscreen();
+            } else {
+                lockOverlay.classList.add('hidden');
             }
         }
-
-        /**
-         * Exits full-screen mode.
-         */
-        function exitFullScreen() {
+        
+        // Check fullscreen status periodically
+        function checkFullscreenStatus() {
+            if (examActive && !document.fullscreenElement) {
+                enforceFullscreen();
+            }
+        }
+        
+        // Check for tab switching
+        function checkTabSwitch() {
+            if (examActive && document.hidden) {
+                cheatingAttempts++;
+                showWarning("Don't switch tabs during the exam!");
+                
+                if (cheatingAttempts >= 3) {
+                    autoSubmitExam("Exam terminated due to multiple tab switches");
+                }
+            }
+        }
+        
+        // Prevent dev tools opening
+        function preventDevTools(e) {
+            if (examActive) {
+                // F12 or Ctrl+Shift+I or Ctrl+Shift+J or Ctrl+Shift+C
+                if (e.key === "F12" || 
+                    (e.ctrlKey && e.shiftKey && (e.key === "I" || e.key === "J" || e.key === "C"))) {
+                    e.preventDefault();
+                    showWarning("Developer tools are disabled during the exam");
+                }
+            }
+        }
+        
+        // Prevent right-click context menu
+        function preventContextMenu(e) {
+            if (examActive) {
+                e.preventDefault();
+                showWarning("Right-click is disabled during the exam");
+            }
+        }
+        
+        // Start the countdown timer
+        function startTimer() {
+            updateTimerDisplay();
+            
+            timer = setInterval(() => {
+                timeLeft--;
+                updateTimerDisplay();
+                
+                // Update progress bar
+                const progressPercent = (timeLeft / EXAM_DURATION) * 100;
+                timeProgress.style.width = `${progressPercent}%`;
+                
+                // Change color when time is running low
+                if (timeLeft <= 60) { // 1 minute left
+                    timeProgress.classList.remove('bg-blue-600');
+                    timeProgress.classList.add('bg-red-600');
+                    timerDisplay.classList.add('text-red-600');
+                    
+                    // Pulse animation
+                    if (timeLeft % 2 === 0) {
+                        timerDisplay.classList.add('animate__pulse');
+                    } else {
+                        timerDisplay.classList.remove('animate__pulse');
+                    }
+                }
+                
+                // Auto-submit when time expires
+                if (timeLeft <= 0) {
+                    clearInterval(timer);
+                    autoSubmitExam("Time's up! Your exam has been automatically submitted.");
+                }
+            }, 1000);
+        }
+        
+        // Update timer display
+        function updateTimerDisplay() {
+            const minutes = Math.floor(timeLeft / 60);
+            const seconds = timeLeft % 60;
+            timerDisplay.textContent = `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
+        }
+        
+        // Load a question
+        function loadQuestion(index) {
+            const question = questions[index];
+            
+            // Update question text
+            questionText.textContent = `${index + 1}. ${question.question}`;
+            
+            // Clear previous options
+            optionsContainer.innerHTML = '';
+            
+            // Create option buttons
+            question.options.forEach((option, i) => {
+                const optionBtn = document.createElement('button');
+                optionBtn.className = 'option-btn w-full text-left p-4 rounded-lg border border-gray-200 hover:border-blue-300 mb-2';
+                optionBtn.textContent = option;
+                
+                // Check if this option was previously selected
+                const isSelected = Array.isArray(userAnswers[index]) ? 
+                                  userAnswers[index].includes(option) : 
+                                  userAnswers[index] === option;
+                
+                if (isSelected) {
+                    optionBtn.classList.add('selected', 'bg-blue-100', 'border-blue-400');
+                }
+                
+                optionBtn.addEventListener('click', () => selectOption(option, index));
+                optionsContainer.appendChild(optionBtn);
+            });
+            
+            // Update navigation buttons
+            prevBtn.disabled = index === 0;
+            
+            // Remove finish button - only auto-submit will end the exam
+            nextBtn.textContent = 'Next';
+            nextBtn.style.display = index === questions.length - 1 ? 'none' : 'block';
+            
+            // Update question counter
+            questionCounter.textContent = `${index + 1}/${questions.length}`;
+        }
+        
+        // Select an option
+        function selectOption(selectedOption, questionIndex) {
+            const question = questions[questionIndex];
+            
+            // Handle single or multiple selection
+            if (question.type === 'multiple') {
+                if (!userAnswers[questionIndex]) {
+                    userAnswers[questionIndex] = [];
+                }
+                
+                const index = userAnswers[questionIndex].indexOf(selectedOption);
+                if (index === -1) {
+                    userAnswers[questionIndex].push(selectedOption);
+                } else {
+                    userAnswers[questionIndex].splice(index, 1);
+                }
+            } else {
+                userAnswers[questionIndex] = selectedOption;
+            }
+            
+            // Reload question to update UI
+            loadQuestion(questionIndex);
+        }
+        
+        // Show previous question
+        function showPreviousQuestion() {
+            if (currentQuestionIndex > 0) {
+                currentQuestionIndex--;
+                loadQuestion(currentQuestionIndex);
+            }
+        }
+        
+        // Show next question
+        function showNextQuestion() {
+            if (currentQuestionIndex < questions.length - 1) {
+                currentQuestionIndex++;
+                loadQuestion(currentQuestionIndex);
+            }
+        }
+        
+        // Submit the exam (only called by timer or cheating detection)
+        function submitExam() {
+            examActive = false;
+            examEndTime = new Date();
+            clearInterval(timer);
+            
+            // Calculate results
+            const results = calculateResults();
+            
+            // Show results screen
+            showResults(results);
+        }
+        
+        // Auto-submit the exam (for timeout or cheating)
+        function autoSubmitExam(reason) {
+            examActive = false;
+            examEndTime = new Date();
+            clearInterval(timer);
+            
+            const results = calculateResults();
+            
+            // Show warning before results
+            alert(reason);
+            showResults(results);
+        }
+        
+        // Calculate exam results
+        function calculateResults() {
+            let correctCount = 0;
+            let totalMarks = 0;
+            let earnedMarks = 0;
+            
+            const detailedResults = questions.map((question, index) => {
+                totalMarks += question.marks;
+                
+                const userAnswer = userAnswers[index];
+                let isCorrect = false;
+                
+                if (question.type === 'multiple') {
+                    // For multiple correct answers, check if all correct options are selected
+                    const correctAnswers = Array.isArray(question.correctAnswer) ? 
+                                          question.correctAnswer : 
+                                          [question.correctAnswer];
+                    
+                    if (Array.isArray(userAnswer)) {
+                        // Check if all correct answers are selected and no incorrect ones
+                        const allCorrectSelected = correctAnswers.every(ans => userAnswer.includes(ans));
+                        const noIncorrectSelected = userAnswer.every(ans => correctAnswers.includes(ans));
+                        isCorrect = allCorrectSelected && noIncorrectSelected;
+                    }
+                } else {
+                    isCorrect = userAnswer === question.correctAnswer;
+                }
+                
+                if (isCorrect) {
+                    correctCount++;
+                    earnedMarks += question.marks;
+                }
+                
+                return {
+                    question: question.question,
+                    userAnswer: userAnswer || "Not answered",
+                    correctAnswer: Array.isArray(question.correctAnswer) ? 
+                                  question.correctAnswer.join(", ") : 
+                                  question.correctAnswer,
+                    isCorrect: isCorrect,
+                    marks: question.marks
+                };
+            });
+            
+            const percentage = Math.round((earnedMarks / totalMarks) * 100);
+            const timeTaken = Math.floor((examEndTime - examStartTime) / 1000);
+            
+            return {
+                totalQuestions: questions.length,
+                correctAnswers: correctCount,
+                totalMarks: totalMarks,
+                earnedMarks: earnedMarks,
+                percentage: percentage,
+                timeTaken: timeTaken,
+                detailedResults: detailedResults,
+                passed: percentage >= PASSING_SCORE
+            };
+        }
+        
+        // Show exam results
+        function showResults(results) {
+            // Hide exam screen, show results screen
+            examScreen.classList.add('hidden');
+            resultsScreen.classList.remove('hidden');
+            
+            // Display summary results
+            scoreDisplay.textContent = `${results.earnedMarks}/${results.totalMarks}`;
+            correctAnswersDisplay.textContent = `${results.correctAnswers}/${results.totalQuestions}`;
+            
+            // Format time taken
+            const minutes = Math.floor(results.timeTaken / 60);
+            const seconds = results.timeTaken % 60;
+            timeTakenDisplay.textContent = `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
+            
+            // Set result message
+            if (results.passed) {
+                resultMessage.textContent = "Congratulations! You passed the exam.";
+                resultMessage.className = "text-green-600 font-medium";
+            } else {
+                resultMessage.textContent = "You didn't pass this time. Try again!";
+                resultMessage.className = "text-red-600 font-medium";
+            }
+            
+            // Display detailed results
+            detailedResults.innerHTML = '';
+            results.detailedResults.forEach((result, index) => {
+                const resultItem = document.createElement('div');
+                resultItem.className = `mb-6 p-4 rounded-lg border ${result.isCorrect ? 'border-green-200 bg-green-50' : 'border-red-200 bg-red-50'}`;
+                
+                resultItem.innerHTML = `
+                    <h3 class="font-semibold text-lg mb-2">${index + 1}. ${result.question}</h3>
+                    <p class="mb-1"><span class="font-medium">Your answer:</span> ${result.userAnswer}</p>
+                    <p class="mb-1"><span class="font-medium">Correct answer:</span> ${result.correctAnswer}</p>
+                    <p class="${result.isCorrect ? 'text-green-600' : 'text-red-600'} font-medium">
+                        ${result.isCorrect ? '✓ Correct' : '✗ Incorrect'} (${result.marks} mark${result.marks > 1 ? 's' : ''})
+                    </p>
+                `;
+                
+                detailedResults.appendChild(resultItem);
+            });
+            
+            // Allow exiting fullscreen now that exam is over
             if (document.exitFullscreen) {
                 document.exitFullscreen();
-            } else if (document.mozCancelFullScreen) { /* Firefox */
-                document.mozCancelFullScreen();
-            } else if (document.webkitExitFullscreen) { /* Chrome, Safari and Opera */
-                document.webkitExitFullscreen();
-            } else if (document.msExitFullscreen) { /* IE/Edge */
-                document.msExitFullscreen();
             }
         }
-
-        /**
-         * Loads the current question and its options into the UI.
-         */
-        function loadQuestion() {
-            if (currentQuestionIndex < questions.length) {
-                const question = questions[currentQuestionIndex];
-                questionText.textContent = `${currentQuestionIndex + 1}. ${question.question}`;
-                optionsContainer.innerHTML = ''; // Clear previous options
-
-                question.options.forEach((option, index) => {
-                    const button = document.createElement('button');
-                    button.textContent = option;
-                    button.classList.add(
-                        'option-button',
-                        'w-full', 'p-4', 'border', 'border-gray-300', 'text-lg', 'text-gray-700',
-                        'hover:bg-blue-100', 'focus:outline-none', 'focus:ring-2', 'focus:ring-blue-500',
-                        'rounded-lg', 'transition', 'duration-200', 'ease-in-out'
-                    );
-                    button.dataset.option = option;
-                    button.addEventListener('click', () => selectOption(button, option));
-                    optionsContainer.appendChild(button);
-                });
-
-                // Update button visibility
-                nextQuestionButton.style.display = 'block';
-                submitExamButton.style.display = 'none';
-                if (currentQuestionIndex === questions.length - 1) {
-                    nextQuestionButton.style.display = 'none';
-                    submitExamButton.style.display = 'block';
-                }
-            }
-        }
-
-        /**
-         * Handles the selection of an answer option.
-         * @param {HTMLButtonElement} selectedButton The button element that was clicked.
-         * @param {string} selectedOption The text of the selected option.
-         */
-        function selectOption(selectedButton, selectedOption) {
-            // Remove 'selected' class from all options for the current question
-            Array.from(optionsContainer.children).forEach(button => {
-                button.classList.remove('selected');
-            });
-
-            // Add 'selected' class to the clicked button
-            selectedButton.classList.add('selected');
-
-            // Store the user's answer for the current question
-            userAnswers[currentQuestionIndex] = selectedOption;
-        }
-
-        /**
-         * Calculates the score and displays results.
-         */
-        function showResults() {
-            score = 0;
-            resultDetails.innerHTML = ''; // Clear previous results
-
-            questions.forEach((question, index) => {
-                const userAnswer = userAnswers[index];
-                const isCorrect = userAnswer === question.correctAnswer;
-
-                if (isCorrect) {
-                    score++;
-                }
-
-                const resultItem = document.createElement('div');
-                resultItem.classList.add('p-4', 'rounded-lg', 'shadow-sm', 'mb-2', isCorrect ? 'bg-green-50' : 'bg-red-50');
-                resultItem.innerHTML = `
-                    <p class="font-semibold text-gray-900">${index + 1}. ${question.question}</p>
-                    <p class="${isCorrect ? 'text-green-700' : 'text-red-700'}">Your Answer: ${userAnswer || 'Not Answered'}</p>
-                    <p class="text-gray-600">Correct Answer: ${question.correctAnswer}</p>
-                `;
-                resultDetails.appendChild(resultItem);
-            });
-
-            scoreDisplay.textContent = score;
-            totalQuestionsDisplay.textContent = questions.length;
-            showPage('page4');
-            exitFullScreen(); // Exit full screen when exam ends
-            examStarted = false; // Reset exam started flag
-        }
-
-        /**
-         * Resets the exam state to allow restarting.
-         */
-        function resetExam() {
+        
+        // Restart the exam
+        function restartExam() {
+            // Reset all state
             currentQuestionIndex = 0;
-            score = 0;
-            userAnswers = [];
-            fullNameInput.value = '';
-            mobileNumberInput.value = '';
-            loginCodeInput.value = '';
-            showPage('page1');
+            userAnswers = Array(questions.length).fill(null);
+            timeLeft = EXAM_DURATION;
+            cheatingAttempts = 0;
+            examActive = false;
+            remainingChances = MAX_CHANCES;
+            
+            // Reset UI
+            timeProgress.style.width = '100%';
+            timeProgress.classList.remove('bg-red-600');
+            timeProgress.classList.add('bg-blue-600');
+            timerDisplay.classList.remove('text-red-600', 'animate__pulse');
+            
+            // Show login screen
+            resultsScreen.classList.add('hidden');
+            loginScreen.classList.remove('hidden');
+            
+            // Clear inputs
+            studentNameInput.value = '';
+            studentIdInput.value = '';
+            examCodeInput.value = '';
+            
+            // Focus on name input
+            studentNameInput.focus();
         }
-
-        /**
-         * Handles the "exam cancelled" scenario due to cheating attempts.
-         */
-        function cancelExam() {
-            if (examStarted) { // Only cancel if exam is actively running
-                showCustomModal("Exam cancelled due to suspicious activity (e.g., leaving full screen, switching tabs). Please contact the administrator.", true, () => {
-                    resetExam(); // Reset and go back to start
-                });
-                exitFullScreen();
-                examStarted = false; // Ensure exam is marked as not started
-            }
+        
+        // Show warning message
+        function showWarning(message) {
+            warningMessage.textContent = message;
+            warningMessage.classList.remove('hidden');
+            warningMessage.classList.add('animate__animated', 'animate__headShake');
+            
+            // Remove animation after it completes
+            setTimeout(() => {
+                warningMessage.classList.remove('animate__headShake');
+            }, 1000);
         }
-
-        // --- Event Listeners ---
-
-        // Page 1: User Info -> Page 2: Login
-        nextToLoginPageButton.addEventListener('click', () => {
-            const fullName = fullNameInput.value.trim();
-            const mobileNumber = mobileNumberInput.value.trim();
-
-            if (fullName === '' || mobileNumber === '') {
-                showCustomModal("Please fill in both your full name and mobile number.");
-                return;
-            }
-            // Basic validation for mobile number (e.g., 10 digits)
-            if (!/^\d{10}$/.test(mobileNumber)) {
-                showCustomModal("Please enter a valid 10-digit mobile number.");
-                return;
-            }
-
-            // Store user info (for display in results, not for persistence in static site)
-            localStorage.setItem('userName', fullName);
-            localStorage.setItem('userMobile', mobileNumber);
-
-            showPage('page2');
-        });
-
-        // Page 2: Login -> Page 3: Exam
-        startExamButton.addEventListener('click', () => {
-            const enteredCode = loginCodeInput.value.trim();
-            if (enteredCode === EXAM_CODE) {
-                requestFullScreen(); // Request full screen on exam start
-                showPage('page3');
-                loadQuestion();
-                examStarted = true; // Mark exam as started
-                // Push a state to history to try and disable back button
-                history.pushState(null, null, location.href);
-            } else {
-                showCustomModal("Incorrect exam code. Please try again.");
-            }
-        });
-
-        // Page 3: Next Question
-        nextQuestionButton.addEventListener('click', () => {
-            if (userAnswers[currentQuestionIndex] === undefined) {
-                showCustomModal("Please select an answer before proceeding.");
-                return;
-            }
-            currentQuestionIndex++;
-            if (currentQuestionIndex < questions.length) {
-                loadQuestion();
-            }
-        });
-
-        // Page 3: Submit Exam
-        submitExamButton.addEventListener('click', () => {
-            if (userAnswers[currentQuestionIndex] === undefined) {
-                showCustomModal("Please select an answer for the last question before submitting.");
-                return;
-            }
-            showResults();
-        });
-
-        // Page 4: Restart Exam
-        restartExamButton.addEventListener('click', () => {
-            resetExam();
-        });
-
-        // --- Anti-Cheating Measures (Client-Side Deterrents) ---
-
-        // Disable back button functionality during exam
-        window.addEventListener('popstate', function (event) {
-            if (examStarted && currentPage === 'page3') {
-                // If exam is active and user tries to go back, push state again to keep them on the page
-                history.pushState(null, null, location.href);
-                showCustomModal("Back button is disabled during the exam.", false);
-            }
-        });
-
-        // Detect full screen exit or tab switching
-        document.addEventListener('fullscreenchange', () => {
-            if (examStarted && !document.fullscreenElement) {
-                // If exam is started and user exits full screen
-                cancelExam();
-            }
-        });
-
-        document.addEventListener('visibilitychange', () => {
-            if (examStarted && document.hidden) {
-                // If exam is started and user switches tabs/minimizes
-                cancelExam();
-            }
-        });
-
-        window.addEventListener('blur', () => {
-            if (examStarted) {
-                // If exam is started and window loses focus (e.g., clicking outside browser, switching apps)
-                cancelExam();
-            }
-        });
-
-        // Prevent right-click context menu (basic deterrent)
-        document.addEventListener('contextmenu', function(e) {
-            if (examStarted) {
-                e.preventDefault();
-                showCustomModal("Right-click is disabled during the exam.");
-            }
-        });
-
-        // --- Initial Load ---
-        window.onload = () => {
-            showPage('page1'); // Start on the first page
-            totalQuestionsDisplay.textContent = questions.length; // Initialize total questions display
-        };
-
+        
+        // Initialize the app when DOM is loaded
+        document.addEventListener('DOMContentLoaded', init);
     </script>
 </body>
 </html>
